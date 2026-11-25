@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Предсказатель — интерактивная викторина</title>
+<style>
+:root{--ink:#29334a;--muted:#68738a;--coral:#ff786e;--orange:#ffb454;--yellow:#ffe17a;--mint:#8bd9c2;--blue:#80c7ee;--lilac:#b9a5f5;--green:#218653;--red:#d94d59}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Trebuchet MS",Arial,sans-serif;line-height:1.55;background-color:#fffaf2;background-image:radial-gradient(circle at 8% 8%,#ffe6d5 0 90px,transparent 91px),radial-gradient(circle at 94% 18%,#e2f7ef 0 115px,transparent 116px),radial-gradient(circle at 4% 68%,#e8e4ff 0 100px,transparent 101px),linear-gradient(135deg,#fffaf2,#f5f9ff)}
+.wrap{max-width:1020px;margin:0 auto;padding:24px 16px 55px}
+.hero{position:relative;overflow:hidden;color:#fff;text-align:center;padding:38px 25px 34px;border-radius:32px;background:linear-gradient(120deg,#ff806f 0%,#ffad61 48%,#f7c95c 100%);box-shadow:0 14px 30px #e88a6533;border:4px solid #fff}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:#ffffff26}
+.hero:before{width:210px;height:210px;left:-65px;top:-95px}.hero:after{width:170px;height:170px;right:-45px;bottom:-95px}
+.hero .gold{position:relative;z-index:1;display:inline-block;background:#ffffff30;border:1px solid #ffffff70;border-radius:30px;padding:5px 15px;font-size:12px;letter-spacing:2px;font-weight:800}
+.hero h1{position:relative;z-index:1;margin:12px 0 4px;font-family:Georgia,serif;font-size:clamp(34px,6vw,54px);text-shadow:0 3px 0 #d76b57}
+.hero p{position:relative;z-index:1;margin:5px auto;max-width:720px;font-size:17px}.hero p:nth-of-type(1){font-weight:800}
+.progressbox{background:#fff;border:2px solid #f6dfc9;border-radius:20px;padding:16px 20px;margin:19px 0;box-shadow:0 7px 18px #9d8d7620}
+.progressbox strong{color:#4d5871}.score{font-size:21px;font-weight:900;color:#e36c5d}
+.progressline{height:15px;background:#f1edf4;border-radius:30px;overflow:hidden;margin-top:9px;padding:2px}
+.progressfill{height:100%;width:0;border-radius:30px;background:linear-gradient(90deg,#75d4b5,#83c9f1,#b9a5f5,#ffb45e);transition:width .3s}
+.section{position:relative;background:#fff;border:2px solid #f2e8df;border-radius:23px;padding:23px;margin:19px 0;box-shadow:0 8px 20px #8c82901a}
+.section h2{margin:0 0 7px;color:#45516c;font-size:23px;display:flex;align-items:center;gap:9px}
+.section h2:before{content:"";display:inline-block;width:11px;height:27px;border-radius:8px;background:linear-gradient(#ff8b75,#ffc45e)}
+.hint{color:var(--muted);font-size:14px;margin:0 0 16px}
+.q{background:linear-gradient(120deg,#fffefa,#fff);border:1.5px solid #eee7e0;border-radius:17px;padding:16px;margin:13px 0;box-shadow:0 3px 9px #8c82900b}
+.q p{font-weight:800;margin:0 0 11px;color:#39445c}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1.5px solid #e5e8ef;background:#f9fbff;padding:11px 13px;border-radius:13px;cursor:pointer;color:var(--ink);font-size:15px;transition:transform .15s,border-color .15s,background .15s}
+.opt:hover{border-color:#9ecde2;background:#f0faff;transform:translateY(-1px)}
+.opt.correct{background:#e5f8ed;border:2px solid var(--green);color:#17633c}
+.opt.wrong{background:#fff0ef;border:2px solid var(--red);color:#9b3039}
+.opt:disabled{cursor:default;transform:none}.letter{font-weight:900;min-width:22px;color:#7183a3}
+.feedback{font-size:14px;margin-top:10px;font-weight:700;padding:8px 11px;border-radius:10px}.feedback.good{color:#17633c;background:#eaf8ef}.feedback.bad{color:#9b3039;background:#fff0ef}
+.sequence-item{display:grid;grid-template-columns:68px 1fr;gap:12px;align-items:center;padding:11px 13px;border:1.5px solid #e8e6f0;background:#fcfbff;border-radius:14px;margin:9px 0}
+.sequence-item input{width:58px;padding:10px;border:2px solid #d8d9ec;border-radius:12px;font-size:17px;text-align:center;font-weight:800;color:#655b9a;background:#fff}
+.sequence-item input:disabled{background:#f5f5fa}.seqresult{font-size:14px;margin-top:10px;font-weight:800}
+button.action{border:0;background:linear-gradient(100deg,#5db9aa,#5b9ed0);color:white;padding:12px 20px;border-radius:30px;font-size:15px;font-weight:900;cursor:pointer;margin-top:10px;box-shadow:0 5px 12px #5b9ed033;transition:transform .15s,filter .15s}
+button.action:hover{filter:brightness(1.06);transform:translateY(-2px)}button.action:disabled{opacity:.55;cursor:default;transform:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.card{position:relative;overflow:hidden;background:linear-gradient(145deg,#fff8e9,#fff);border:1.5px solid #f3d9b5;border-radius:17px;padding:15px;box-shadow:0 4px 12px #a58b6512}
+.card:nth-child(4n+2){background:linear-gradient(145deg,#effaf7,#fff);border-color:#c7e9dc}
+.card:nth-child(4n+3){background:linear-gradient(145deg,#f2f0ff,#fff);border-color:#d9d0fa}
+.card:nth-child(4n){background:linear-gradient(145deg,#fff0ef,#fff);border-color:#f4d0cc}
+.card strong{display:block;color:#4d5871;margin-bottom:5px}
+.bonusrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;padding:15px;background:#fff8e9;border:1.5px dashed #f0c56d;border-radius:16px}
+.bonusrow input{width:90px;padding:10px;border-radius:10px;border:2px solid #f0d69b;font-size:17px;font-weight:800}
+#showSuper{background:linear-gradient(100deg,#ff9279,#f4b94e)}
+.final{display:none;position:relative;overflow:hidden;text-align:center;color:#fff;border-radius:30px;padding:34px 22px 38px;margin-top:24px;background:radial-gradient(circle at 50% 0%,#ffe28b 0 9%,transparent 10%),linear-gradient(145deg,#ff866f 0%,#f5a653 48%,#e9bd4f 100%);border:5px solid white;box-shadow:0 14px 30px #e58e5838}
+.final:before{content:"✦  ✧       ✦      ✧       ✦";position:absolute;top:17px;left:0;right:0;color:#fff8d8;font-size:25px;letter-spacing:15px}
+.final:after{content:"✧       ✦      ✧       ✦";position:absolute;bottom:12px;left:0;right:0;color:#fff8d8;font-size:22px;letter-spacing:13px}
+.final .medal{font-size:76px;filter:drop-shadow(0 5px 2px #a45c3c55);margin-top:15px;animation:pop .55s ease-out}
+.final h2{font-family:Georgia,serif;font-size:clamp(27px,5vw,38px);margin:7px 0;color:#fff;text-shadow:0 2px 0 #d77955}
+.final p{font-size:18px;font-weight:700;margin:8px auto;max-width:600px}
+.final .result-number{display:inline-flex;align-items:center;justify-content:center;min-width:190px;min-height:110px;margin:12px auto;padding:10px 28px;border-radius:28px;background:#fff;color:#e4775f;font-size:48px;font-weight:1000;box-shadow:0 8px 0 #d87d55}
+.final .result-caption{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#fff8e7}
+.final .final-note{display:inline-block;background:#ffffff30;border:1px solid #ffffff70;border-radius:18px;padding:10px 16px;margin-top:13px}
+@keyframes pop{0%{transform:scale(.5) rotate(-15deg);opacity:0}75%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1);opacity:1}}
+@media(max-width:650px){.section{padding:17px}.opts{grid-template-columns:1fr}.hero{padding:30px 17px}.sequence-item{grid-template-columns:58px 1fr}.sequence-item input{width:52px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="gold">ЛИТЕРАТУРНАЯ ВИКТОРИНА</div>
+  <h1>«Предсказатель»</h1>
+  <p>По рассказу Юрия Ермолаева</p>
+  <p>Вспомни историю Яши и Гени, проверь внимательность и разберись, почему предсказание мальчика сбылось.</p>
+</header>
+<div class="progressbox">
+  <div><strong>Твой результат:</strong> <span class="score" id="score">0</span> / 38 баллов</div>
+  <div class="progressline"><div class="progressfill" id="progress"></div></div>
+  <small id="progressText">Выполнено закрытых заданий: 0</small>
+</div>
+
+<section class="section" id="facts">
+<h2>1. Вопросы по содержанию</h2><p class="hint">Выбери один правильный ответ. За каждый верный ответ — 1 балл.</p>
+<div id="factQuestions"></div>
+</section>
+
+<section class="section" id="truefalse">
+<h2>2. Верно или неверно?</h2><p class="hint">Прочитай утверждение и выбери ответ. За каждый верный ответ — 1 балл.</p>
+<div id="tfQuestions"></div>
+</section>
+
+<section class="section" id="sequence">
+<h2>3. Восстанови последовательность событий</h2><p class="hint">Впиши номера от 1 до 8 в правильном порядке. За каждое верно установленное место — 1 балл.</p>
+<div id="sequenceItems"></div>
+<button class="action" id="checkSequence">Проверить последовательность</button>
+<div class="seqresult" id="sequenceFeedback" aria-live="polite"></div>
+</section>
+
+<section class="section" id="motives">
+<h2>4. Поступки и мотивы героев</h2><p class="hint">Подумай, почему герои поступали именно так. За каждый верный ответ — 1 балл.</p>
+<div id="motiveQuestions"></div>
+</section>
+
+<section class="section">
+<h2>Результат основной части</h2>
+<p>Основные задания дают максимум <strong>38 баллов</strong>. После них можно выполнить суперзадание — устный пересказ.</p>
+<div class="score"><span id="mainScore">0</span> / 38 баллов</div>
+<button class="action" id="showSuper">Перейти к суперзаданию</button>
+</section>
+
+<section class="section" id="super" style="display:none">
+<h2>5. Суперзадание — перескажи рассказ</h2>
+<p class="hint">Используй опорные карточки. Расскажи историю последовательно, не пропуская важные события. Логопед оценивает устный пересказ и выставляет до 12 бонусных баллов.</p>
+<div class="cards">
+<div class="card"><strong>1. Обычный мальчик</strong>Яша Кукушкин, его внешность и место среди одноклассников.</div>
+<div class="card"><strong>2. Неожиданное предупреждение</strong>Разговор Яши с Геней. Пятница или суббота.</div>
+<div class="card"><strong>3. Привычная помощь</strong>Как Яша раньше выручал Геню на уроках.</div>
+<div class="card"><strong>4. Контрольная</strong>Арифметика, кашель-сигнал и записка «Выручай!».</div>
+<div class="card"><strong>5. Отказ</strong>Ответ Яши: он больше никому не будет подсказывать.</div>
+<div class="card"><strong>6. Обида Гени</strong>Его возмущение после контрольной.</div>
+<div class="card"><strong>7. Повод для ссоры</strong>Бумажная закладка, дежурство и нападение на Яшу.</div>
+<div class="card"><strong>8. Сбывшееся предсказание</strong>Последние слова Яши и почему он оказался прав.</div>
+</div>
+<div class="bonusrow"><label for="bonus"><strong>Бонус за пересказ (0–12):</strong></label><input id="bonus" type="number" min="0" max="12" value="0"><button class="action" id="finish">Завершить викторину</button></div>
+</section>
+
+<div class="final" id="final">
+<div class="medal">🏆</div>
+<div class="result-caption">ТВОЁ ПРИКЛЮЧЕНИЕ ЗАВЕРШЕНО</div>
+<h2>Ты молодец!</h2>
+<p>Вот сколько баллов ты набрал:</p>
+<div class="result-number"><span id="finalScore">0</span>&nbsp;/&nbsp;50</div>
+<p id="finalMessage" class="final-note"></p>
+</div>
+</div>
+<script>
+const facts = [
+["Как звали главного героя рассказа?",["Геня Бубликов","Яша Кукушкин","Петя Соколов","Коля Иванов"],1,"Главный герой — Яша Кукушкин."],
+["Каким мальчиком был Яша?",["Самым озорным в классе","Отличником и старостой","Обыкновенным, ничем не примечательным","Самым тихим учеником"],2,"Автор подчёркивает, что Яша был самым обыкновенным мальчиком."],
+["Кем оказался Яша, по словам рассказчика?",["Предсказателем","Фокусником","Изобретателем","Сыщиком"],0,"Необычным оказалось то, что Яша предсказал поступок товарища."],
+["К кому подошёл Яша со своим предсказанием?",["К учителю","К младшему брату","К дежурному","К Гене Бубликову"],3,"Яша обратился к самому сильному однокласснику — Гене Бубликову."],
+["Что предсказал Яша?",["Что Геня получит двойку","Что Геня его поколотит","Что они поссорятся с учителем","Что Геня перестанет ходить в школу"],1,"Яша сказал, что Геня поколотит его в пятницу или, в крайнем случае, в субботу."],
+["Почему Геня не поверил Яше?",["Он считал, что Яша шутит, ведь они друзья","Он не расслышал слова","Он уже уехал из города","Он боялся контрольной"],0,"Геня считал Яшу своим первым другом и не ожидал от него такого предупреждения."],
+["Как Геня обычно просил Яшу о помощи на уроке?",["Передавал учебник","Стучал карандашом","Кашлял","Поднимал руку"],2,"Кашель был условным сигналом, после которого Яша подсказывал."],
+["Какой предмет был на контрольной в пятницу?",["Русский язык","Природоведение","Чтение","Арифметика"],3,"На втором уроке у четвероклассников была контрольная по арифметике."],
+["Что сделал Геня, когда Яша не отреагировал на кашель?",["Послал ему записку","Позвал учителя","Пересел на другую парту","Сдал пустой лист"],0,"Геня отправил Яше записку со словами «Выручай!»."],
+["Что было написано в ответной записке Яши?",["«Решай сам»","«Я дал себе слово больше никогда никому не подсказывать»","«Спроси после урока»","«Я не знаю решения»"],1,"Яша сообщил, что дал себе слово больше никому не подсказывать."],
+["Что выпало из Яшиной книги?",["Фотография","Карандаш","Маленькая бумажная закладка","Тетрадный лист"],2,"Из книги выпала маленькая бумажная закладка."],
+["Как Геня объяснил своё недовольство Яшей после контрольной?",["Сказал, что тот испортил книгу","Обвинил его в опоздании","Пожаловался на шум","Объявил, что Яша сорит, а он дежурит"],3,"Геня использовал выпавшую закладку как повод обвинить Яшу в мусоре."],
+["Что сделал Геня с Яшей в коридоре?",["Дёрнул его за руку и повалил на пол","Отвёл к учителю","Попросил прощения","Ушёл, не сказав ни слова"],0,"Геня дёрнул Яшу за руку и повалил его на пол."],
+["В каком классе учились мальчики?",["Во втором","В третьем","В четвёртом","В пятом"],2,"В рассказе прямо сказано: контрольная была у четвероклассников."],
+["Как Яша закончил разговор, оказавшись на полу?",["Попросил Геню остановиться","Напомнил, что сегодня пятница, а Геня спорил","Сказал, что завтра суббота","Позвал дежурного"],1,"Последняя реплика Яши напоминает Гене о сбывшемся предсказании."]
+];
+const tfs = [
+["Яша был самым сильным мальчиком в классе.",false,"Самым сильным одноклассником был Геня."],
+["Геня называл Яшу своим первым другом.",true,"Геня считал Яшу своим первым другом."],
+["Яша часто помогал Гене на уроках.",true,"Он подсказывал ему, когда тот подавал условный сигнал."],
+["Геня обычно кашлял, чтобы попросить подсказку.",true,"Кашель служил условным знаком."],
+["Контрольная проходила в пятницу на первом уроке.",false,"Контрольная по арифметике была на втором уроке."],
+["Яша сразу подсказал Гене решение контрольной.",false,"Яша не стал подсказывать и отправил отказ."],
+["В записке Яша написал, что больше никогда никому не будет подсказывать.",true,"Именно так звучал ответ Яши."],
+["Из книги Яши выпала бумажная закладка.",true,"Закладка стала поводом для придирки Гени."],
+["Геня повалил Яшу на пол из-за того, что тот отказался помочь на контрольной, но прикрылся разговором о мусоре.",true,"Отказ разозлил Геню, а закладка дала ему повод для нападения."],
+["Яша предсказал, что Геня поколотит его в воскресенье.",false,"Яша назвал пятницу или, в крайнем случае, субботу."]
+];
+const motives = [
+["Почему Яша заранее сказал Гене, что тот его поколотит?",["Он хотел напугать весь класс","Он понимал, что Геня рассердится, когда не получит привычную подсказку","Он собирался пожаловаться директору","Он хотел уйти из школы"],1,"Яша понимал, как Геня отреагирует на отказ от подсказок."],
+["Почему Геня считал Яшу своим первым другом?",["Яша всегда приглашал его домой","Они вместе занимались спортом","Яша помогал ему на уроках и выручал подсказками","Яша отдавал ему свои книги"],2,"Геня привык к постоянной помощи Яши и воспринимал её как дружбу."],
+["Почему Геня так возмутился, получив отказ?",["Он привык, что Яша всегда его выручает","Он не любил арифметику","Он потерял свою записку","Учитель запретил ему писать"],0,"Геня привык получать подсказки и не ожидал, что Яша откажет."],
+["Зачем Геня заговорил о бумажке и дежурстве?",["Он хотел помочь Яше найти закладку","Он действительно собирался убрать весь класс","Он хотел сменить тему контрольной","Он нашёл повод придраться к Яше и выплеснуть злость"],3,"Разговор о мусоре стал предлогом для ссоры."],
+["Что показывает рассказ о предсказании Яши?",["Яша обладал волшебным даром","Иногда можно предвидеть поступок человека, зная его привычки и характер","Геня умел читать мысли","Все предсказания обязательно сбываются"],1,"Яша не волшебник: он понимал, как поведёт себя Геня."]
+];
+const letters=["А","Б","В","Г"];
+let score=0, answered=0, seqDone=false, finished=false;
+function update(){
+ document.getElementById("score").textContent=score;
+ document.getElementById("progress").style.width=(score/38*100)+"%";
+ document.getElementById("progressText").textContent="Выполнено закрытых заданий: "+answered+" из 38";
+ document.getElementById("mainScore").textContent=score;
+}
+function renderChoice(target,data,prefix){
+ const root=document.getElementById(target);
+ data.forEach((q,i)=>{
+  const box=document.createElement("div");box.className="q";
+  const p=document.createElement("p");p.textContent=(i+1)+". "+q[0];box.appendChild(p);
+  const opts=document.createElement("div");opts.className="opts";
+  const fb=document.createElement("div");fb.className="feedback";
+  q[1].forEach((v,j)=>{
+   const b=document.createElement("button");b.className="opt";
+   b.innerHTML='<span class="letter">'+letters[j]+'.</span><span></span>';b.querySelector("span:last-child").textContent=v;
+   b.addEventListener("click",()=>{
+    if(box.dataset.done)return;
+    box.dataset.done="1";answered++;
+    const correct=q[2];
+    [...opts.children].forEach((el,k)=>{el.disabled=true;if(k===correct)el.classList.add("correct");});
+    if(j===correct){score++;fb.textContent="Верно! "+q[3];fb.className="feedback good";}
+    else{b.classList.add("wrong");fb.textContent="Неверно. Правильный ответ: "+letters[correct]+". "+q[3];fb.className="feedback bad";}
+    update();
+   });
+   opts.appendChild(b);
+  });
+  box.append(opts,fb);root.appendChild(box);
+ });
+}
+renderChoice("factQuestions",facts,"f");
+renderChoice("motiveQuestions",motives,"m");
+const tfRoot=document.getElementById("tfQuestions");
+tfs.forEach((q,i)=>{
+ const box=document.createElement("div");box.className="q";
+ const p=document.createElement("p");p.textContent=(i+1)+". "+q[0];box.appendChild(p);
+ const opts=document.createElement("div");opts.className="opts";const fb=document.createElement("div");fb.className="feedback";
+ ["Верно","Неверно"].forEach((label,k)=>{
+  const value=(k===0);
+  const b=document.createElement("button");b.className="opt";b.textContent=label;
+  b.addEventListener("click",()=>{
+   if(box.dataset.done)return;box.dataset.done="1";answered++;
+   [...opts.children].forEach((el,n)=>{el.disabled=true;if((n===0)===q[1])el.classList.add("correct");});
+   if(value===q[1]){score++;fb.textContent="Верно! "+q[2];fb.className="feedback good";}
+   else{b.classList.add("wrong");fb.textContent="Неверно. "+q[2];fb.className="feedback bad";}
+   update();
+  });opts.appendChild(b);
+ });
+ box.append(opts,fb);tfRoot.appendChild(box);
+});
+const seq=[
+["Яша подошёл к Гене и предсказал, что тот поколотит его в пятницу или субботу.",1],
+["Геня рассмеялся и не поверил предупреждению Яши.",2],
+["На контрольной по арифметике Геня подал Яше условный сигнал кашлем.",3],
+["Не получив подсказки, Геня отправил Яше записку «Выручай!».",4],
+["Яша ответил, что дал себе слово больше никому не подсказывать.",5],
+["После контрольной Геня возмутился и стал искать повод придраться к Яше.",6],
+["Из книги Яши выпала закладка, и Геня обвинил его в том, что он сорит.",7],
+["Геня повалил Яшу на пол, а тот напомнил о своём предсказании.",8]
+];
+const shuffled=[5,1,7,0,3,6,2,4];
+const seqRoot=document.getElementById("sequenceItems");
+shuffled.forEach((idx)=>{
+ const item=document.createElement("div");item.className="sequence-item";
+ const inp=document.createElement("input");inp.type="number";inp.min="1";inp.max="8";inp.placeholder="★";inp.setAttribute("aria-label","Номер события");
+ const txt=document.createElement("div");txt.textContent=seq[idx][0];item.append(inp,txt);seqRoot.appendChild(item);item.dataset.correct=seq[idx][1];
+});
+document.getElementById("checkSequence").addEventListener("click",()=>{
+ if(seqDone)return;const rows=[...seqRoot.children];let got=0;
+ rows.forEach(row=>{const inp=row.querySelector("input");const ok=Number(inp.value)===Number(row.dataset.correct);inp.disabled=true;inp.style.borderColor=ok?"#25834b":"#c44747";if(ok)got++;});
+ score+=got;answered+=8;seqDone=true;document.getElementById("sequenceFeedback").textContent="Правильно расставлено: "+got+" из 8. Начислено "+got+" баллов.";document.getElementById("checkSequence").disabled=true;update();
+});
+document.getElementById("showSuper").addEventListener("click",()=>{
+ document.getElementById("super").style.display="block";document.getElementById("super").scrollIntoView({behavior:"smooth"});
+});
+document.getElementById("finish").addEventListener("click",()=>{
+ if(finished)return;const inp=document.getElementById("bonus");let bonus=Math.max(0,Math.min(12,Number(inp.value)||0));inp.value=bonus;finished=true;
+ document.getElementById("finalScore").textContent=score+bonus;
+ const total=score+bonus;
+ document.getElementById("finalMessage").textContent=total>=45?"Прекрасная работа! Ты внимательно прочитал рассказ.":total>=35?"Хороший результат! Ты хорошо помнишь историю.":total>=20?"Неплохо! Перечитай рассказ и попробуй ещё раз.":"Продолжай тренироваться — у тебя получится!";
+ document.getElementById("final").style.display="block";document.getElementById("final").scrollIntoView({behavior:"smooth"});
+});
+update();
+</script>
+</body>
+</html>
